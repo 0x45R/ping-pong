@@ -82,6 +82,7 @@ input.player-name{
 input.player-name::placeholder{
   color: forestgreen;
 }
+
 .hint{
   color: white;
   max-width: 12rem;
@@ -125,6 +126,10 @@ input.player-name::placeholder{
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+player-keybind[in-use]{
+  border: .25rem dashed;
 }
 
 player-keybind{
@@ -218,6 +223,10 @@ game-over{
 
 body{
   font-family: Montserrat;
+}
+
+html{
+  font-size: 2.5vmin;
 }
 
 canvas{

@@ -7,6 +7,16 @@ class PlayerKeybind extends HTMLElement{
   constructor(){
     super();
   }
+  get inUse(){
+    return this.hasAttribute('in-use');
+  }
+  set inUse(value){
+    if(value){
+      this.setAttribute('in-use','');
+    }else{
+      this.removeAttribute('in-use');
+    }
+  }
   getKeybindIcon(){
     if(this.keybind == "ArrowDown"){
       return '<i class="ti ti-arrow-big-down-filled"></i>'
@@ -77,7 +87,7 @@ class PlayerPanel extends HTMLElement{
               <player-keybind type='down'></player-keybind>
             </div>
           </div>
-          <p class="hint">^ Tutaj wpisz swoje imie by pojawilo sie w tabeli wynikow, lub kliknij na ikone zeby zagrac z graczem</p>`;
+          <p class="hint">^ Tutaj wpisz swoje imie by pojawilo sie w tabeli wynikow, lub kliknij na ikone zeby zagrac z komputerem</p>`;
       this.querySelector(".player-name").addEventListener('change',(e)=>this.setPlayerName(e))
 
 

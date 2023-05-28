@@ -13,12 +13,14 @@ class Ball{
     this.velocity = velocity;
     this.position = this.center(this.game.ctx);
     this.collider = Collider.newFromObject(this);
+    this.audioManager = document.querySelector('audio-manager');
   }
   center(ctx){
      return {x:ctx.canvas.width/2+this.size.width/2, y:ctx.canvas.height/2-this.size.height/2};
   }
 
   ballBounce(collider){
+    this.audioManager.playPaddleSound();
     this.velocity.x *= -1;
     this.velocity.y = -collider.velocity.y*0.1+Math.random();
   }
@@ -38,12 +40,13 @@ class Ball{
       this.position = this.center(ctx);
       this.velocity.x = 0;
       this.velocity.y = 0;
+      this.audioManager.playGoalSound();
 
-      setTimeout(()=>this.velocity.x = goal,2500)
+      setTimeout(()=>{this.velocity.x = goal;this.audioManager.playBallLaunchSound();},2500)
     }
     if(this.position.y> ctx.canvas.height || this.position.y-this.size.height< 0){
       this.velocity.y *= -1;
-
+      this.audioManager.playPaddleSound();
     }
   }
   draw(ctx){
@@ -186,6 +189,7 @@ class Paddle{
 class GameBoard extends HTMLElement {
  constructor(data){
    super();
+    this.initialData = data;
     this.players = data.players;
    this.innerHTML = `<div class="info-bar">
    <div class="info">
@@ -219,7 +223,7 @@ class GameBoard extends HTMLElement {
       let winner = this.score.left >=10 ? "left" : "right";
       let joinedTeamNames = this.players[winner].map(element => element.name).join(",")
       let message = joinedTeamNames + " wygrywa!";
-      this.sceneManager.loadScene('game-over', {result:  message});
+      this.sceneManager.loadScene('game-over', {result:  message, gameData: this.initialData});
     }
 
     return direction;
