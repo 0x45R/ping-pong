@@ -10,17 +10,16 @@
 }
 
 .back-to-menu{
-  left: 10px;
-  top: 10px;
+  left: 1rem;
+  top: 1rem;
   position: absolute;
   width: 2.5rem;
 }
 
 .pause-button{
   width: 2.5rem;
+  left: 1rem;
   position: absolute;
-  left: 10px;
-  top: 10px;
 }
 scene-manager>*{
   position: fixed;
@@ -75,7 +74,7 @@ button:hover{
   flex: 1;
 }
 
-input.player-name{
+input.player-name:placeholder-shown{
   border: .3rem dashed;
   cursor: initial;
 }
@@ -214,7 +213,19 @@ game-over{
   text-align: center;
 }
 
-
+.game-overlay{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+  width:  100%;
+  gap: 1rem;
+  background-color: rgba(50,70,0,0.3);
+  opacity: 0;
+  z-index: 100;
+}
 *{
   margin: 0;
   padding: 0;
@@ -226,11 +237,13 @@ body{
 }
 
 html{
-  font-size: 2.5vmin;
+  font-size: calc(1vmin + 12px);
 }
 
-canvas{
+.canvas-container, canvas{
   flex: 1;
+  display: flex;
+  position: relative;
 }
 .info-bar > .info{
   flex: 1;

@@ -191,15 +191,28 @@ class GameBoard extends HTMLElement {
    super();
     this.initialData = data;
     this.players = data.players;
-   this.innerHTML = `<div class="info-bar">
+   this.innerHTML = `
+
+<div class="info-bar">
    <div class="info">
+      <button class="pause-button">
+        <i class="ti ti-player-pause-filled"></i>
+      </button>
+
      <p class="score left">0</p>
      <p id="game-clock">00:00</p>
      <p class="score right">0</p>
    </div>
  </div>
+<div class="canvas-container">
+<div class="game-overlay">
+<p class="game-title">Pauza</p>
+<button class="restart-button">Restart</button>
+<button class="menu-button">Powrot do menu</button>
+</div>
  <canvas id="game-canvas">
  </canvas>
+</div>
  <div class="info-bar">
    <div class="info-team left"></div>
    <div class="info-team right"></div>
@@ -228,6 +241,32 @@ class GameBoard extends HTMLElement {
 
     return direction;
   }
+  get paused(){
+    return this.hasAttribute('paused');
+  }
+  set paused(value){
+    if(value === this.paused){
+      return;
+    }
+    if(value){
+      Array.from(this.gameOverlay.children).forEach(element => {
+        element.removeAttribute('disabled');
+      });
+      this.setAttribute('paused','');
+      this.pauseButton.innerHTML = '<i class="ti ti-player-play-filled"></i>'
+      this.clearIntervals();
+      this.gameOverlay.animate([{opacity: 0}, {opacity: 1}], {duration: 200, fill: "forwards"})
+    }else{    
+      Array.from(this.gameOverlay.children).forEach(element => {
+        element.setAttribute('disabled','');
+      });
+      this.pauseButton.innerHTML = '<i class="ti ti-player-pause-filled"></i>'
+      this.removeAttribute('paused');
+      this.setupIntervals();    
+      this.gameOverlay.animate([{opacity: 1}, {opacity: 0}], {duration: 200, fill: "forwards"})
+    }
+  }
+
   setupIntervals(){
     this.tickInterval = setInterval(()=>this.tick(), 1000/60);
     this.clockInterval = setInterval(()=>this.clockTick(), 1000);
@@ -269,11 +308,25 @@ class GameBoard extends HTMLElement {
     this.score = 0;
     this.clearIntervals();
   }
+  pauseButtonClicked(){
+    this.paused = !this.paused
+  }
   connectedCallback(){
     this.sceneManager = document.querySelector("scene-manager");
     this.canvas = document.getElementById("game-canvas");
     this.ctx = this.canvas.getContext("2d");
     this.gameClock = document.getElementById('game-clock');
+    
+    this.pauseButton = this.querySelector(".pause-button");
+    this.pauseButton.addEventListener('click',()=>this.pauseButtonClicked());
+    window.addEventListener('blur',()=>this.paused=true);
+
+    this.gameOverlay = this.querySelector(".game-overlay");
+    this.restartButton = this.querySelector('.restart-button');
+    this.mainMenuButton = this.querySelector('.menu-button');
+
+    this.restartButton.addEventListener('click',()=>this.sceneManager.loadScene("game-board", this.initialData));
+    this.mainMenuButton.addEventListener('click',()=>this.sceneManager.loadScene("main-menu"))
 
     this.startTime = new Date().getTime();
     this.gameTime = 0;
@@ -287,16 +340,7 @@ class GameBoard extends HTMLElement {
 
     this.objects.push(new Ball(this));
     this.objects.push(new Line(this));
-    /*= [
-      //new Paddle(this, "left", new AISteer()),
-      new Paddle(this, "left", new PlayerSteer({"up":"w","down":"s"})),
-      //new Paddle(this, "right"),     
-      new Paddle(this, "right", new AISteer(), {x: 1000, y:0}, {x: 0.08}),
-      new Ball(this),
-      new Line(this)
-    ];*/
     this.score = {left: 0, right: 0}
-    //if(this.players.left.type == 0){
   }
 
   clockTick(){
