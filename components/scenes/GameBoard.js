@@ -255,7 +255,9 @@ class GameBoard extends HTMLElement {
       this.setAttribute('paused','');
       this.pauseButton.innerHTML = '<i class="ti ti-player-play-filled"></i>'
       this.clearIntervals();
-      this.gameOverlay.animate([{opacity: 0}, {opacity: 1}], {duration: 200, fill: "forwards"})
+ //     this.gameOverlay.classList.add('hidden');
+      this.gameOverlay.animate([{opacity: 0}, {opacity: 1}], {duration: 200, fill: "forwards"})     
+      setTimeout(()=>{this.gameOverlay.classList.remove('hidden');}, 200);
     }else{    
       Array.from(this.gameOverlay.children).forEach(element => {
         element.setAttribute('disabled','');
@@ -263,7 +265,8 @@ class GameBoard extends HTMLElement {
       this.pauseButton.innerHTML = '<i class="ti ti-player-pause-filled"></i>'
       this.removeAttribute('paused');
       this.setupIntervals();    
-      this.gameOverlay.animate([{opacity: 1}, {opacity: 0}], {duration: 200, fill: "forwards"})
+      this.gameOverlay.animate([{opacity: 1}, {opacity: 0}], {duration: 200, fill: "forwards"});
+      setTimeout(()=>{this.gameOverlay.classList.add('hidden');}, 200);
     }
   }
 
