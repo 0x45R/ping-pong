@@ -1,14 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;800&display=swap');
 
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing:border-box;
+}
+
 .hidden{
   opacity: 0;
   pointer-events: none;
+  display: none;
 }
 
+.scoreboard-item{
+  color: white;
+  font-size: 1.5rem;
+  font-weight:bold;
+}
+button:disabled{
+  pointer-events: none;
+  all: none;
+  display: none;
+  cursor: none;
+  appearance: none;
+}
 .start-button{
   font-size: 1.5rem;
 }
-
+table, td{
+  border: .1rem solid white;
+  font-weight: 800;
+  color: white;
+  padding: .25rem;
+  border-collapse: collapse;
+  background-color: #4c9a00;
+}
 .back-to-menu{
   left: 1rem;
   top: 1rem;
@@ -197,11 +223,23 @@ waiting-room{
   gap: 1rem;
   text-align: center;
 }
+score-board{
+  background:  #4c9a00;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
 
 game-board{
   display: flex;
   background-color: yellowgreen;
   flex-direction:  column;
+  max-height: 100vh;
+  overflow-y: hidden;
 }
 game-over{
   background-color: #4c9a00;
@@ -239,11 +277,22 @@ body{
 html{
   font-size: calc(1vmin + 12px);
 }
-
-.canvas-container, canvas{
+#game-canvas{
+  display: flex;
+  overflow: hidden;
+  width: 99%;
+  height: 100%;
+  background-color:yellowgreen;
+  border-radius: 1rem;
+}
+.canvas-container{
   flex: 1;
   display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
+  max-height: max-content;
+
 }
 .info-bar > .info{
   flex: 1;

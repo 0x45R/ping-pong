@@ -1,12 +1,10 @@
-
 // Ukradzione z https://stackoverflow.com/a/11409944
 Number.prototype.clamp = function(min, max) {
   return Math.min(Math.max(this, min), max);
 };
 
-
 class Ball{
-  constructor(game, position={x: 0, y: 0}, velocity={x:1,y:0}, size={width: 10, height: 10}, speed=10){
+  constructor(game, velocity={x:1,y:0}, size={width: 10, height: 10}, speed=10){
     this.game = game;
     this.size = size;
     this.speed = speed;
@@ -188,55 +186,64 @@ class Paddle{
 
 class GameBoard extends HTMLElement {
  constructor(data){
-   super();
+    super();
+    // Zmienna 'data' to dane przeslane z poczekalni
     this.initialData = data;
     this.players = data.players;
-   this.innerHTML = `
-
-<div class="info-bar">
-   <div class="info">
-      <button class="pause-button">
+    this.innerHTML = `
+    <div class="info-bar">
+      <div class="info">
+        <button class="pause-button">
         <i class="ti ti-player-pause-filled"></i>
-      </button>
+        </button>
 
-     <p class="score left">0</p>
-     <p id="game-clock">00:00</p>
-     <p class="score right">0</p>
-   </div>
- </div>
-<div class="canvas-container">
-<div class="game-overlay">
-<p class="game-title">Pauza</p>
-<button class="restart-button">Restart</button>
-<button class="menu-button">Powrot do menu</button>
-</div>
- <canvas id="game-canvas">
- </canvas>
-</div>
- <div class="info-bar">
-   <div class="info-team left"></div>
-   <div class="info-team right"></div>
- </div>
-`;  
+        <p class="score left">0</p>
+        <p id="game-clock">00:00</p>
+        <p class="score right">0</p>
+      </div>
+    </div>
+    <div class="canvas-container">
+      <div class="game-overlay">
+        <p class="game-title">Pauza</p>
+        <button class="restart-button">Restart</button>
+        <button class="menu-button">Powrót do menu</button>
+      </div>
+      <canvas id="game-canvas" width="0" height="0">
+      </canvas>
+    </div>
+    <div class="info-bar">
+      <div class="info-team left"></div>
+      <div class="info-team right"></div>
+    </div>`;  
 
   }
   goal(side){
     let direction = 0;
     if(side>0){
+      // Jezeli pilka upadla po stronie lewej to daj punkt prawej stronie i ustaw kierunek pilki w lewo
       this.score.right+=1; 
       direction = -1;
     } else {
+      // Jezeli nie to na odwrot
       this.score.left+=1;     
       direction = 1;
     }
+
+    // Ustaw wynik lewej i prawej strony
     this.querySelector(".score.left").innerHTML = this.score.left;
     this.querySelector(".score.right").innerHTML = this.score.right;
 
+    // Jezeli wynik ktorejkolwiek strony jest wiekszy badz rowny 10 to
     if(this.score.left >=10 || this.score.right >=10){
+      // Ustal zwyciezce i przegranego
       let winner = this.score.left >=10 ? "left" : "right";
+      let loser = this.score.left >=10 ? "right" : "left";
+      // Nazwy graczy zapisz do zmiennej
       let joinedTeamNames = this.players[winner].map(element => element.name).join(",")
+      // Zapisz wiadomosc z nazwami graczy
       let message = joinedTeamNames + " wygrywa!";
-      this.sceneManager.loadScene('game-over', {result:  message, gameData: this.initialData});
+      // Zaladuj scene konca gry z danymi takimi jak: zwyciezca, przegrany, wiadomosc i dane tej rozgrywki
+      this.sceneManager.loadScene('game-over', {result: {winner:this.players[winner][0].name,loser:this.players[loser][0].name,message:message}, gameData: this.initialData});
     }
 
     return direction;
@@ -245,73 +252,96 @@ class GameBoard extends HTMLElement {
     return this.hasAttribute('paused');
   }
   set paused(value){
+    // Jezeli gra juz jest zatrzymana to nic nie rob
     if(value === this.paused){
       return;
     }
-    if(value){
+    if(value){   
+      // Jezeli gra ma byc zatrzymana to
       Array.from(this.gameOverlay.children).forEach(element => {
+        // Wlacz kazdy element (glownie przyciski)
         element.removeAttribute('disabled');
       });
+      // Ustaw atrybut tego elementu na 'paused'
       this.setAttribute('paused','');
+      // Zmien ikone przycisku pauzy na ikone play wypelniona
       this.pauseButton.innerHTML = '<i class="ti ti-player-play-filled"></i>'
+      // Wyczysc wszystkie "interwaly"
       this.clearIntervals();
- //     this.gameOverlay.classList.add('hidden');
-      this.gameOverlay.animate([{opacity: 0}, {opacity: 1}], {duration: 200, fill: "forwards"})     
-      setTimeout(()=>{this.gameOverlay.classList.remove('hidden');}, 200);
+      // Animuj przez 200ms wyjawianie sie
+      this.gameOverlay.animate([{opacity: 0}, {opacity: 1}], {duration: 200, fill: "forwards"});
+      // po 200 ms usun klase 'hidden'
+      setTimeout(()=>{this.gameOverlay.classList.remove('hidden');}, 200);;
     }else{    
+      // Jezeli gra ma byc 'odpauzowana' to
       Array.from(this.gameOverlay.children).forEach(element => {
+        // Wylacz kazdy element (glownie przyciski)
         element.setAttribute('disabled','');
       });
+      // Zmien ikone przycisku pauzy na ikone pauzy wypelnionej
       this.pauseButton.innerHTML = '<i class="ti ti-player-pause-filled"></i>'
+      // Usun atrybut 'paused'
       this.removeAttribute('paused');
-      this.setupIntervals();    
+      // Ustaw 'interwaly'
+      this.setupIntervals();
+      // Animuj przez 200ms zanikanie
       this.gameOverlay.animate([{opacity: 1}, {opacity: 0}], {duration: 200, fill: "forwards"});
+      // Daj kazdemu elementowi w gameOverlay klase hidden
       setTimeout(()=>{this.gameOverlay.classList.add('hidden');}, 200);
     }
   }
 
   setupIntervals(){
+    // Ustaw by 60 razy na sekunde wywolywana zostawala funkcja tick
     this.tickInterval = setInterval(()=>this.tick(), 1000/60);
+    // Oraz co 1 sekunde funkcja clockTick
     this.clockInterval = setInterval(()=>this.clockTick(), 1000);
   }
   getPlayers(){
-    console.log(this.players)
-    this.allTeams = {left: {}, right:{}}
+    // Funkcja ktora ma znalezc i ustalic graczy
+    this.allTeams = {left: {}, right:{}};
     this.allTeams.left = document.querySelector(".info-team.left");
     this.allTeams.right = document.querySelector(".info-team.right");
 
+    // Iteruj przez obiekt this.players
     for (const [key, value] of Object.entries(this.players)) {
       let team = key;
+      // Chcialem dodac wiecej graczy niz po jednym na druzyne jednak wkoncu sie nie zdecydowalem
       this.players[team].forEach(element => {
+        // Stworz paragraf
         let paragraph = document.createElement('p');
         let playerIcon = "";
-        let paddleObject = new Paddle(this, team, new PlayerSteer(element.keybinds)); // add controls
+        // Utworz obiekt paletki gracza z jego ustawieniami sterowania
+        let paddleObject = new Paddle(this, team, new PlayerSteer(element.keybinds));
         if(element.type == 0){
+          // Jezeli gracz jest czlowiekiem to tylko zmien jego ikone na ikone user-circle
           playerIcon = '<i class="ti ti-user-circle"></i>';
         }else{
+          // Jezeli nie jest czlowiekiem to zmien jego ikone na cpu oraz jego sterowanie na nowa instancje AISteer
           playerIcon = '<i class="ti ti-cpu"></i>'; 
           paddleObject.steer = new AISteer();
         }
+        // Ustaw zawartosc paragrafu na ikone gracza i nazwe
         paragraph.innerHTML = `${playerIcon} ${element.name}`;
+        // Dodaj paletke gracza do obiektow gry
         this.objects.push(paddleObject)
+        // Dodaj druzyne do reszty druzyn
         this.allTeams[team].appendChild(paragraph)
       });
     }
-  
-    //his.querySelector("#left-player-name").innerHTML = '' + this.players.left.name;
-    //this.querySelector("#right-player-name").innerHTML = '<i class="ti ti-cpu"></i>' + this.players.right.name;
-
-
   }
   clearIntervals(){
+    // Usuwa 'interwaly'
     clearInterval(this.tickInterval);
     clearInterval(this.clockInterval);
   }
   disconnectedCallback(){
+    // Gdy element jest usuniety, ustaw score na 0 i usun 'interwaly'
     this.score = 0;
     this.clearIntervals();
   }
   pauseButtonClicked(){
+    // Jezeli przycisk pauzy zostal klikniety to zmien zmienna pauza na przeciwna
     this.paused = !this.paused
   }
   connectedCallback(){
@@ -319,6 +349,7 @@ class GameBoard extends HTMLElement {
     this.canvas = document.getElementById("game-canvas");
     this.ctx = this.canvas.getContext("2d");
     this.gameClock = document.getElementById('game-clock');
+    this.canvasContainer = this.querySelector('.canvas-container');
     
     this.pauseButton = this.querySelector(".pause-button");
     this.pauseButton.addEventListener('click',()=>this.pauseButtonClicked());
@@ -347,6 +378,7 @@ class GameBoard extends HTMLElement {
   }
 
   clockTick(){
+    // Z kazda sekunda zmieniaj zegar
     let date = new Date().getTime();
     this.gameTime = (date - this.startTime) / 1000;
     let seconds = new String(Math.round(this.gameTime) % 60).padStart(2, "0");
@@ -357,9 +389,11 @@ class GameBoard extends HTMLElement {
 
 
   tick(){
-    this.canvas.width = this.canvas.clientWidth;
-    this.canvas.height = this.canvas.clientHeight;
-
+    // Kazde 60 razy na sekunde 
+    // Ustaw wielkosc elementu canvas na wielkosc elementu canvasContainer
+    this.canvas.width = this.canvasContainer.clientWidth;
+    this.canvas.height = this.canvasContainer.clientHeight;
+    // Iteruj przez tablice objects, za kazdym razem wywolujac funkcje rysowania z argumentem ctx
     this.objects.forEach(obj => {
       obj.draw(this.ctx);
     });
