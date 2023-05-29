@@ -9,6 +9,7 @@ class Ball{
     this.size = size;
     this.speed = speed;
     this.velocity = velocity;
+    // Pilka zaczyna od srodka
     this.position = this.center(this.game.ctx);
     this.collider = Collider.newFromObject(this);
     this.audioManager = document.querySelector('audio-manager');
@@ -18,12 +19,14 @@ class Ball{
   }
 
   ballBounce(collider){
+    // Odbij pilke i zagraj dzwiek
     this.audioManager.playPaddleSound();
     this.velocity.x *= -1;
     this.velocity.y = -collider.velocity.y*0.1+Math.random();
   }
 
   checkCollision(ctx){
+    // Iteruj przez kazdy obiekt ktory nie jest pilka i sprawdz czy koliduje z pilka, jezeli tak to odbij pilke
     this.game.objects.forEach(element => {
       if(!(element instanceof Ball)){
         if(element.collider !== null){
@@ -32,6 +35,7 @@ class Ball{
       }
     });
 
+    // Sprawdz czy pilka nie wpadla do bramki, jezeli tak to zagraj dzwiek, wysrodkuj i daj punkt
     if(this.position.x+this.size.width> ctx.canvas.width || this.position.x+this.size.width< 0){
       let goal = this.game.goal(+(this.position.x < 0));
 
@@ -42,21 +46,28 @@ class Ball{
 
       setTimeout(()=>{this.velocity.x = goal;this.audioManager.playBallLaunchSound();},2500)
     }
+    // Jezeli pilka odbije sie od gornej albo dolnej krawedzi
     if(this.position.y> ctx.canvas.height || this.position.y-this.size.height< 0){
       this.velocity.y *= -1;
       this.audioManager.playPaddleSound();
     }
   }
   draw(ctx){
-    this.speed += 1/6000;
-     
+    // Narysuj pilke
+    // Pilka przyspiesza o 1/600 na tick
+    this.speed += 1/600;
+    
+    // Pozycja obiektu collider jest taka sama jak pozycja pilki
     this.collider.position = this.position;
     this.collider.velocity = this.velocity;
+    // Sprawdz kolizje
     this.checkCollision(ctx);
-
+    
+    // Zmien pozycje o predkosc
     this.position.x += this.velocity.x*this.speed;
     this.position.y += this.velocity.y*this.speed;
    
+    // Pilka jest bialym kolem
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(this.position.x,this.position.y, this.size.width, 0, Math.PI * 2)
@@ -65,9 +76,13 @@ class Ball{
 
 }
 class AISteer{
-  tick(paddle, ctx){
+  // Klasa odpowiedzialna za sterowanie paletka przez komputer
+  tick(paddle){
+    // 60 razy na sekunde 
+    // Znajdz pilke
     let ball = paddle.game.objects.filter(element=>element instanceof Ball)[0];
-    paddle.velocity.x = 0;
+
+    // Magia, by paletka podazala za pilka (jak narazie dziala, nie wiem jak, bylem zbyt nieogarniety gdy to pisalem) 
     if(Math.ceil(paddle.position.y/10)*10 == Math.ceil((ball.position.y-paddle.size.height/2)/10)*10){
       paddle.velocity.y = 0;
     }
@@ -81,19 +96,20 @@ class AISteer{
 }
 
 class PlayerSteer{
+  // Klasa odpowiedzialna za sterowanie paletka przez gracza
   constructor(keybinds={"up":"ArrowUp", "down":"ArrowDown"}){
     this.keyBuffer = [];
     this.keybinds = keybinds;
+    // Jezeli przycisk jest klikniety dodaj go do tablicy keyBuffer
     window.addEventListener("keydown", (event)=>this.addToBuffer(event.key));
     window.addEventListener("keyup", (event)=>this.removeFromBuffer(event.key));
   }
-  tick(paddle, ctx){
-    paddle.velocity.x = 0;
+  tick(paddle){
+    // Wyzeruj predkosc paletki    
     paddle.velocity.y = 0;
+    // Jezeli przycisk w dol albo w gore jest klikniety to zmien predkosc paletki
     if(this.keyPressed(this.keybinds.down)) paddle.velocity.y = 1 * paddle.speed;
     if(this.keyPressed(this.keybinds.up)) paddle.velocity.y = -1 * paddle.speed;
-
-    
   }
 
   keyPressed(key){
@@ -114,11 +130,13 @@ class PlayerSteer{
 }
 
 class Line{
+  // Klasa odpowiedzialna za rysowanie na ekranie tej przerywanej kreski po srodu
   constructor(game){
     this.game = game;
-    this.collider = null;
+    this.collider = null; // Kreska nie ma kolizji
   }
   draw(ctx){
+    // Kreska jest przerywana, biala o szerokosci 5, na srodku
     ctx.strokeStyle = "white";
     ctx.lineWidth = 5;
     ctx.setLineDash([20, 20]);
@@ -130,6 +148,7 @@ class Line{
 }
 
 class Collider{
+  // Klasa odpowiedzialna za kolizje
   constructor(position = {x: 0, y: 0}, size = {width: 100, height: 50}, velocity = {x: 0, y:0}){
     this.position = position;
     this.size = size;
@@ -137,47 +156,56 @@ class Collider{
   }
 
   collidesWith(collider, callback){
+    // Sprawdz czy ten obiekt koliduje z
     if(
       this.position.x < collider.position.x + collider.size.width &&
       this.position.x + this.size.width > collider.position.x &&
       this.position.y < collider.position.y + collider.size.height &&
       this.size.height + this.position.y > collider.position.y
     ){
+      // Jezeli tak to wywolaj funkcje, argument callback
       callback(this);
     }
   }
   static newFromObject(object){
+    // Stworz nowy "collider" z obiektu
     return new Collider(object.position, object.size, object.velocity);
   }
 }
 
 class Paddle{
+  // Klasa odpowiedzialna za paletki
   constructor(game, side= "left",  steer = new PlayerSteer(), position = {x: 0, y: 0}, padding = {x:0.04}, size = {width: 10, height: 100}, speed=10, velocity={x:0,y:0}){
     this.game = game;
     this.size = size;
     this.side = side;
     this.speed = speed;
     this.steer = steer;
-    this.position =position;  // Add custom setter and getter to position that doesn't allow this to go out of bounds
+    this.position = position;
     this.collider = Collider.newFromObject(this);
     this.velocity = velocity;
     this.padding = padding;
   }
 
   draw(ctx){
+    // Za kazdym razem wywolaj funkcje tick steru
     this.steer.tick(this, ctx);
+    // Zmien pozycje o predkosc 
     this.position.y += this.velocity.y;
     this.position.y = this.position.y.clamp(0, this.game.canvas.height-this.size.height);
     let padding = ctx.canvas.width*this.padding.x;
     ctx.fillStyle = "white";
     ctx.beginPath();
     if(this.side == "left"){
+      // Jezeli paletka ma byc narysowana po lewej, to narysuj ja po lewej
       this.position.x = padding;
       ctx.roundRect(this.position.x, this.position.y, this.size.width, this.size.height, 100);
     }else{
+      // Jezeli paletka ma byc narysowana po prawej, to narysuj ja po prawej
       this.position.x = ctx.canvas.width-padding;
       ctx.roundRect(this.position.x, this.position.y, this.size.width, this.size.height, 100);
     }
+    // Zaktualizuj parametry "collidera"
     this.collider.position = this.position;
     this.collider.velocity = this.velocity;
     ctx.fill();
